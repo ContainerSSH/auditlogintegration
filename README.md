@@ -10,3 +10,28 @@ This library provides an integration overlay for the [SSH server](https://github
 
 <p align="center"><strong>Note: This is a developer documentation.</strong><br />The user documentation for ContainerSSH is located at <a href="https://containerssh.github.io">containerssh.github.io</a>.</p>
 
+## Using this library
+
+In order to use this library you will need two things:
+
+1. An [audit logger from the auditlog library](https://github.com/containerssh/auditlog).
+2. A [handler from the sshserver library](https://github.com/containerssh/sshserver) to act as a backend to this library.
+
+You can then create the audit logging handler like this:
+
+```go
+handler := sshserver_auditlog.New(
+    backend,
+    auditLogger,
+)
+```
+
+You can then pass this handler to the SSH server as [described in the readme](https://github.com/containerssh/sshserver):
+
+```go
+server, err := sshserver.New(
+    cfg,
+    handler,
+    logger,
+)
+```
