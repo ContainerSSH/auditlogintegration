@@ -1,4 +1,4 @@
-module github.com/containerssh/sshserver-auditlog
+module github.com/containerssh/auditlogintegration
 
 go 1.14
 

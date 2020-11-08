@@ -1,4 +1,4 @@
-package sshserver_auditlog
+package auditlogintegration
 
 import (
 	"github.com/containerssh/auditlog"
