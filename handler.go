@@ -8,7 +8,6 @@ import (
 
 	"github.com/containerssh/auditlog"
 	"github.com/containerssh/sshserver"
-	"github.com/google/uuid"
 )
 
 type handler struct {
@@ -34,20 +33,16 @@ func (h *handler) OnShutdown(shutdownContext context.Context) {
 	wg.Wait()
 }
 
-func (h *handler) OnNetworkConnection(ip net.Addr) (sshserver.NetworkConnectionHandler, error) {
-	backend, err := h.backend.OnNetworkConnection(ip)
+func (h *handler) OnNetworkConnection(client net.TCPAddr, connectionID []byte) (sshserver.NetworkConnectionHandler, error) {
+	backend, err := h.backend.OnNetworkConnection(client, connectionID)
 	if err != nil {
 		return nil, err
 	}
-	connectionId, err := uuid.New().MarshalBinary()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate unique connection ID for %s (%w)", ip.String(), err)
-	}
-	auditConnection, err := h.logger.OnConnect(connectionId, *ip.(*net.TCPAddr))
+	auditConnection, err := h.logger.OnConnect(connectionID, client)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to initialize audit logger for connection from %s  (%w)",
-			ip.String(),
+			"failed to initialize audit logger for connection from %s (%w)",
+			client.IP.String(),
 			err,
 		)
 	}
