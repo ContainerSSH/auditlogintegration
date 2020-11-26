@@ -31,7 +31,13 @@ func (n *networkConnectionHandler) OnAuthPassword(
 	return response, reason
 }
 
-func (n *networkConnectionHandler) OnAuthPubKey(username string, pubKey []byte) (response sshserver.AuthResponse, reason error) {
+func (n *networkConnectionHandler) OnAuthPubKey(
+	username string,
+	pubKey []byte,
+) (
+	response sshserver.AuthResponse,
+	reason error,
+) {
 	n.audit.OnAuthPubKey(username, pubKey)
 	response, reason = n.backend.OnAuthPubKey(username, pubKey)
 	switch response {
@@ -51,10 +57,17 @@ func (n *networkConnectionHandler) OnAuthPubKey(username string, pubKey []byte) 
 
 func (n *networkConnectionHandler) OnHandshakeFailed(reason error) {
 	n.backend.OnHandshakeFailed(reason)
+	n.audit.OnHandshakeFailed(reason.Error())
 }
 
-func (n *networkConnectionHandler) OnHandshakeSuccess() (connection sshserver.SSHConnectionHandler, failureReason error) {
-	backend, err := n.backend.OnHandshakeSuccess()
+func (n *networkConnectionHandler) OnHandshakeSuccess(
+	username string,
+) (
+	connection sshserver.SSHConnectionHandler,
+	failureReason error,
+) {
+	n.audit.OnHandshakeSuccessful(username)
+	backend, err := n.backend.OnHandshakeSuccess(username)
 	if err != nil {
 		return nil, err
 	}
