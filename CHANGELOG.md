@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1: Tests, bump to latest sshserver and auditlog (December 11, 2020)
+
+This release updates the integration to match the latest [sshserver](https://github.com/containerssh/sshserver), [auditlog](https://github.com/containerssh/auditlog), and [log](https://github.com/containerssh/log).
+
 ## 0.9.0: Initial Release (November 27, 2020)
 
 In order to use this library you will need two things:
