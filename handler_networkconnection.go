@@ -33,7 +33,7 @@ func (n *networkConnectionHandler) OnAuthPassword(
 
 func (n *networkConnectionHandler) OnAuthPubKey(
 	username string,
-	pubKey []byte,
+	pubKey string,
 ) (
 	response sshserver.AuthResponse,
 	reason error,

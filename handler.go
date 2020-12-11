@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/containerssh/auditlog"
+	"github.com/containerssh/auditlog/message"
 	"github.com/containerssh/sshserver"
 )
 
@@ -33,12 +34,12 @@ func (h *handler) OnShutdown(shutdownContext context.Context) {
 	wg.Wait()
 }
 
-func (h *handler) OnNetworkConnection(client net.TCPAddr, connectionID []byte) (sshserver.NetworkConnectionHandler, error) {
+func (h *handler) OnNetworkConnection(client net.TCPAddr, connectionID string) (sshserver.NetworkConnectionHandler, error) {
 	backend, err := h.backend.OnNetworkConnection(client, connectionID)
 	if err != nil {
 		return nil, err
 	}
-	auditConnection, err := h.logger.OnConnect(connectionID, client)
+	auditConnection, err := h.logger.OnConnect(message.ConnectionID(connectionID), client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to initialize audit logger for connection from %s (%w)",
