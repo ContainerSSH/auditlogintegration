@@ -6,6 +6,8 @@ github.com/containerssh/auditlog v0.9.5 h1:kbtC+XPTKDyIVXZX18rO2n6TG++wCJwLVi0kM
 github.com/containerssh/auditlog v0.9.5/go.mod h1:ezrNeyCAfzmO1kDlQf2XbmbBNP7jZTKTO1+3lPmS6s0=
 github.com/containerssh/geoip v0.9.3 h1:RDj46uxB3Ew7qoTHCUClBDkqULRZJOLxYf/VqPgEuK8=
 github.com/containerssh/geoip v0.9.3/go.mod h1:8fyg4eUrKKY0FDyS7GofI6OO7UXDoG1icRtVAHb510k=
+github.com/containerssh/geoip v0.9.4 h1:ugkbESJpitdObbSHdYNQfpoFJOlvxwNCX2ZHHnlVJzA=
+github.com/containerssh/geoip v0.9.4/go.mod h1:JxyH+hKj7LfoXWmOMR5lQVrNJCpy42N3GNWSPEguq24=
 github.com/containerssh/log v0.9.2 h1:QngZdg3EFvFxthpJY4X2qgVwqSHFTzHJ2kCiQkR7FLQ=
 github.com/containerssh/log v0.9.2/go.mod h1:05pgNm7IgFKt+qbZiUhtuJw2B4j3ynn2vSv5j2JA7hA=
 github.com/containerssh/log v0.9.6 h1:K3/RjrKnTfT1jBe+9PxMdFrZkLSmXQapZD4wcSFGe5w=
