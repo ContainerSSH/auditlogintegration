@@ -1,7 +1,6 @@
 package auditlogintegration_test
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -9,6 +8,7 @@ import (
 	"net"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/containerssh/auditlog"
 	"github.com/containerssh/auditlog/codec/binary"
@@ -16,25 +16,14 @@ import (
 	"github.com/containerssh/auditlog/storage/file"
 	"github.com/containerssh/geoip"
 	"github.com/containerssh/log"
-	"github.com/containerssh/service"
 	"github.com/containerssh/sshserver"
-	"github.com/containerssh/structutils"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/crypto/ssh"
 
 	"github.com/containerssh/auditlogintegration"
 )
 
 func TestConnectMessages(t *testing.T) {
-	logger, err := log.New(
-		log.Config{
-			Level: log.LevelDebug,
-			Format: log.FormatText,
-		},
-		"audit",
-		os.Stdout,
-	)
-	assert.NoError(t, err)
+	logger := log.GetTestLogger(t)
 
 	dir, err := ioutil.TempDir("temp", "testcase")
 	assert.NoError(t, err)
@@ -42,28 +31,29 @@ func TestConnectMessages(t *testing.T) {
 		_ = os.RemoveAll(dir)
 	}()
 
-	lifecycle := createTestServer(t, dir, logger)
+	srv, client := createTestServer(t, dir, logger)
+	srv.Start()
 
-	onReady := make(chan struct{})
-	lifecycle.OnRunning(
-		func(_ service.Service, _ service.Lifecycle) {
-			onReady <- struct{}{}
-		},
-	)
-	go func() {
-		_ = lifecycle.Run()
-	}()
+	connection := client.MustConnect()
+	session := connection.MustSession()
+	session.MustShell()
+	if _, err := session.Write([]byte("Check 1, 2...")); err != nil {
+		t.Fatal(err)
+	}
+	session.ReadRemaining()
+	if err := session.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := connection.Close(); err != nil {
+		t.Fatal(err)
+	}
 
-	<-onReady
-
-	processClientConnection(t)
-
-	lifecycle.Stop(context.Background())
+	srv.Stop(10 * time.Second)
 
 	checkStoredAuditMessages(t, dir, logger)
 }
 
-func createTestServer(t *testing.T, dir string, logger log.Logger) service.Lifecycle {
+func createTestServer(t *testing.T, dir string, logger log.Logger) (sshserver.TestServer, sshserver.TestClient) {
 	geoipLookup, err := geoip.New(
 		geoip.Config{
 			Provider: "dummy",
@@ -86,48 +76,12 @@ func createTestServer(t *testing.T, dir string, logger log.Logger) service.Lifec
 	)
 	assert.NoError(t, err)
 
-	sshConfig := sshserver.Config{
-		Listen: "127.0.0.1:2222",
-	}
-	structutils.Defaults(&sshConfig)
-	assert.NoError(t, sshConfig.GenerateHostKey())
+	srv := sshserver.NewTestServer(auditLogHandler, logger)
+	user := sshserver.NewTestUser("test")
+	user.RandomPassword()
 
-	srv, err := sshserver.New(
-		sshConfig,
-		auditLogHandler,
-		logger,
-	)
-	assert.NoError(t, err)
-
-	lifecycle := service.NewLifecycle(srv)
-	return lifecycle
-}
-
-func processClientConnection(t *testing.T) {
-	clientConfig := &ssh.ClientConfig{
-		User: "foo",
-		Auth: []ssh.AuthMethod{ssh.Password("bar")},
-	}
-	clientConfig.HostKeyCallback = func(hostname string, remote net.Addr, key ssh.PublicKey) error {
-		return nil
-	}
-	sshConnection, err := ssh.Dial("tcp", "127.0.0.1:2222", clientConfig)
-	assert.NoError(t, err)
-	session, err := sshConnection.NewSession()
-	assert.NoError(t, err)
-
-	stdin, stdout, err := createPipe(session)
-	assert.NoError(t, err)
-	assert.NoError(t, session.Shell())
-
-	_, err = stdin.Write([]byte("Check 1, 2..."))
-	assert.NoError(t, err)
-	assert.NoError(t, stdin.Close())
-
-	_, err = ioutil.ReadAll(stdout)
-	assert.NoError(t, err)
-
-	assert.NoError(t, sshConnection.Close())
+	client := sshserver.NewTestClient(srv.GetListen(), srv.GetHostKey(), user, logger)
+	return srv, client
 }
 
 func checkStoredAuditMessages(t *testing.T, dir string, logger log.Logger) {
@@ -182,19 +136,22 @@ loop:
 	assert.Equal(t, message.TypeDisconnect, messages[7].MessageType)
 }
 
-func createPipe(session *ssh.Session) (io.WriteCloser, io.Reader, error) {
-	stdin, err := session.StdinPipe()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to request stdin (%w)", err)
-	}
-	stdout, err := session.StdoutPipe()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to request stdout (%w)", err)
-	}
-	return stdin, stdout, nil
+type backendHandler struct {
+	session sshserver.SessionChannel
 }
 
-type backendHandler struct {}
+func (b *backendHandler) OnAuthKeyboardInteractive(
+	_ string,
+	_ func(
+		instruction string,
+		questions sshserver.KeyboardInteractiveQuestions,
+	) (answers sshserver.KeyboardInteractiveAnswers, err error),
+) (response sshserver.AuthResponse, reason error) {
+	return sshserver.AuthResponseUnavailable, fmt.Errorf("not implemented")
+}
+
+func (b *backendHandler) OnClose() {
+}
 
 func (b *backendHandler) OnUnsupportedChannelRequest(_ uint64, _ string, _ []byte) {}
 
@@ -203,7 +160,8 @@ func (b *backendHandler) OnFailedDecodeChannelRequest(
 	_ string,
 	_ []byte,
 	_ error,
-) {}
+) {
+}
 
 func (b *backendHandler) OnEnvRequest(_ uint64, _ string, _ string) error {
 	return fmt.Errorf("env requests are not supported")
@@ -224,25 +182,17 @@ func (b *backendHandler) OnPtyRequest(
 func (b *backendHandler) OnExecRequest(
 	_ uint64,
 	_ string,
-	_ io.Reader,
-	_ io.Writer,
-	_ io.Writer,
-	_ func(exitStatus sshserver.ExitStatus),
 ) error {
 	return fmt.Errorf("exec requests are not supported")
 }
 
 func (b *backendHandler) OnShell(
 	_ uint64,
-	stdin io.Reader,
-	stdout io.Writer,
-	_ io.Writer,
-	onExit func(exitStatus sshserver.ExitStatus),
 ) error {
 	go func() {
-		_, _ = ioutil.ReadAll(stdin)
-		_, _ = stdout.Write([]byte("Hello world!"))
-		onExit(0)
+		_, _ = ioutil.ReadAll(b.session.Stdin())
+		_, _ = b.session.Stdout().Write([]byte("Hello world!"))
+		b.session.ExitStatus(0)
 	}()
 	return nil
 }
@@ -250,10 +200,6 @@ func (b *backendHandler) OnShell(
 func (b *backendHandler) OnSubsystem(
 	_ uint64,
 	_ string,
-	_ io.Reader,
-	_ io.Writer,
-	_ io.Writer,
-	_ func(exitStatus sshserver.ExitStatus),
 ) error {
 	return fmt.Errorf("subsystem requests are not supported")
 }
@@ -272,18 +218,19 @@ func (b *backendHandler) OnUnsupportedGlobalRequest(_ uint64, _ string, _ []byte
 func (b *backendHandler) OnUnsupportedChannel(_ uint64, _ string, _ []byte) {
 }
 
-func (b *backendHandler) OnSessionChannel(_ uint64, _ []byte) (
+func (b *backendHandler) OnSessionChannel(_ uint64, _ []byte, session sshserver.SessionChannel) (
 	channel sshserver.SessionChannelHandler,
 	failureReason sshserver.ChannelRejection,
 ) {
+	b.session = session
 	return b, nil
 }
 
-func (b *backendHandler) OnAuthPassword(username string, password []byte) (
+func (b *backendHandler) OnAuthPassword(username string, _ []byte) (
 	response sshserver.AuthResponse,
 	reason error,
 ) {
-	if username == "foo" && bytes.Equal(password, []byte("bar")) {
+	if username == "test" {
 		return sshserver.AuthResponseSuccess, nil
 	}
 	return sshserver.AuthResponseFailure, nil
@@ -295,7 +242,7 @@ func (b *backendHandler) OnAuthPubKey(_ string, _ string) (response sshserver.Au
 
 func (b *backendHandler) OnHandshakeFailed(_ error) {}
 
-func (b *backendHandler) OnHandshakeSuccess(username string) (
+func (b *backendHandler) OnHandshakeSuccess(_ string) (
 	connection sshserver.SSHConnectionHandler,
 	failureReason error,
 ) {

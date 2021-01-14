@@ -6,6 +6,8 @@ import (
 )
 
 type networkConnectionHandler struct {
+	sshserver.AbstractNetworkConnectionHandler
+
 	backend sshserver.NetworkConnectionHandler
 	audit   auditlog.Connection
 }

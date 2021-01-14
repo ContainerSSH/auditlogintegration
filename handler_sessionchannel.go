@@ -1,15 +1,16 @@
 package auditlogintegration
 
 import (
-	"io"
-
 	"github.com/containerssh/auditlog"
 	"github.com/containerssh/sshserver"
 )
 
 type sessionChannelHandler struct {
+	sshserver.AbstractSessionChannelHandler
+
 	backend sshserver.SessionChannelHandler
 	audit   auditlog.Channel
+	session sshserver.SessionChannel
 }
 
 func (s *sessionChannelHandler) OnUnsupportedChannelRequest(requestID uint64, requestType string, payload []byte) {
@@ -34,25 +35,11 @@ func (s *sessionChannelHandler) OnEnvRequest(requestID uint64, name string, valu
 func (s *sessionChannelHandler) OnExecRequest(
 	requestID uint64,
 	program string,
-	stdin io.Reader,
-	stdout io.Writer,
-	stderr io.Writer,
-	onExit func(exitStatus sshserver.ExitStatus),
 ) error {
-	stdin = s.audit.GetStdinProxy(stdin)
-	stdout = s.audit.GetStdoutProxy(stdout)
-	stderr = s.audit.GetStderrProxy(stderr)
 	s.audit.OnRequestExec(requestID, program)
 	if err := s.backend.OnExecRequest(
 		requestID,
 		program,
-		stdin,
-		stdout,
-		stderr,
-		func(exitStatus sshserver.ExitStatus) {
-			s.audit.OnExit(uint32(exitStatus))
-			onExit(exitStatus)
-		},
 	); err != nil {
 		return err
 	}
@@ -79,25 +66,10 @@ func (s *sessionChannelHandler) OnPtyRequest(
 
 func (s *sessionChannelHandler) OnShell(
 	requestID uint64,
-	stdin io.Reader,
-	stdout io.Writer,
-	stderr io.Writer,
-	onExit func(exitStatus sshserver.ExitStatus),
 ) error {
-	stdin = s.audit.GetStdinProxy(stdin)
-	stdout = s.audit.GetStdoutProxy(stdout)
-	stderr = s.audit.GetStderrProxy(stderr)
-
 	s.audit.OnRequestShell(requestID)
 	if err := s.backend.OnShell(
 		requestID,
-		stdin,
-		stdout,
-		stderr,
-		func(exitStatus sshserver.ExitStatus) {
-			s.audit.OnExit(uint32(exitStatus))
-			onExit(exitStatus)
-		},
 	); err != nil {
 		s.audit.OnRequestFailed(requestID, err)
 		return err
@@ -117,25 +89,11 @@ func (s *sessionChannelHandler) OnSignal(requestID uint64, signal string) error 
 func (s *sessionChannelHandler) OnSubsystem(
 	requestID uint64,
 	subsystem string,
-	stdin io.Reader,
-	stdout io.Writer,
-	stderr io.Writer,
-	onExit func(exitStatus sshserver.ExitStatus),
 ) error {
-	stdin = s.audit.GetStdinProxy(stdin)
-	stdout = s.audit.GetStdoutProxy(stdout)
-	stderr = s.audit.GetStderrProxy(stderr)
 	s.audit.OnRequestSubsystem(requestID, subsystem)
 	if err := s.backend.OnSubsystem(
 		requestID,
 		subsystem,
-		stdin,
-		stdout,
-		stderr,
-		func(exitStatus sshserver.ExitStatus) {
-			s.audit.OnExit(uint32(exitStatus))
-			onExit(exitStatus)
-		},
 	); err != nil {
 		s.audit.OnRequestFailed(requestID, err)
 		return err
