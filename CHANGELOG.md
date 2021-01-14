@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.3: Bumping version
+
+This release bumps the version to work aroung Go caching.
+
 ## 0.9.2: Updated to sshserver 0.9.16
 
 This release adds support for the new interactions in [sshserver](https://github.com/containerssh/sshserver) 0.9.16. 
