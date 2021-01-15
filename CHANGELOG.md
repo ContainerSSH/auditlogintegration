@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.4: Passing through OnShutdown, Keyboard Interactive.
+
+This release fixes a bug where the OnShutdown hook would not be passed through to the backends and adds Keyboard-Interactive authentication support.
+
 ## 0.9.3: Bumping version
 
 This release bumps the version to work aroung Go caching.

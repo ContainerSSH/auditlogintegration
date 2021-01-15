@@ -1,6 +1,7 @@
 package auditlogintegration
 
 import (
+	"context"
 	"io"
 
 	"github.com/containerssh/auditlog"
@@ -9,10 +10,12 @@ import (
 )
 
 type sshConnectionHandler struct {
-	sshserver.AbstractSSHConnectionHandler
-
 	backend sshserver.SSHConnectionHandler
 	audit   auditlog.Connection
+}
+
+func (s *sshConnectionHandler) OnShutdown(shutdownContext context.Context) {
+	s.backend.OnShutdown(shutdownContext)
 }
 
 func (s *sshConnectionHandler) OnUnsupportedGlobalRequest(requestID uint64, requestType string, payload []byte) {
@@ -111,9 +114,6 @@ func (s *sessionProxy) CloseWrite() error {
 }
 
 func (s *sessionProxy) Close() error {
-	if s.audit == nil {
-		panic("BUG: close requested before channel is open")
-	}
-	s.audit.OnClose()
+	// Audit logging is done via the session channel hook.
 	return s.backend.Close()
 }

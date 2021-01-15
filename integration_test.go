@@ -22,6 +22,59 @@ import (
 	"github.com/containerssh/auditlogintegration"
 )
 
+func TestKeyboardInteractiveAuthentication(t *testing.T) {
+	logger := log.GetTestLogger(t)
+
+	dir, err := ioutil.TempDir("temp", "testcase")
+	assert.NoError(t, err)
+	defer func() {
+		_ = os.RemoveAll(dir)
+	}()
+
+	geoipLookup, err := geoip.New(
+		geoip.Config{
+			Provider: "dummy",
+		},
+	)
+	assert.NoError(t, err)
+
+	auditLogHandler, err := auditlogintegration.New(
+		auditlog.Config{
+			Enable:  true,
+			Format:  auditlog.FormatBinary,
+			Storage: auditlog.StorageFile,
+			File: file.Config{
+				Directory: dir,
+			},
+		},
+		&backendHandler{},
+		geoipLookup,
+		logger,
+	)
+	assert.NoError(t, err)
+
+	user := sshserver.NewTestUser("test")
+	user.AddKeyboardInteractiveChallengeResponse("Challenge", "Response")
+
+	srv := sshserver.NewTestServer(auditLogHandler, logger)
+	srv.Start()
+	client := sshserver.NewTestClient(srv.GetListen(), srv.GetHostKey(), user, logger)
+	connection := client.MustConnect()
+	_ = connection.Close()
+	srv.Stop(10 * time.Second)
+
+	messages, errors, done := getStoredMessages(t, dir, logger)
+	if done {
+		return
+	}
+	assert.Empty(t, errors)
+	assert.Equal(t, message.TypeConnect, messages[0].MessageType)
+	assert.Equal(t, message.TypeAuthKeyboardInteractiveChallenge, messages[1].MessageType)
+	assert.Equal(t, message.TypeAuthKeyboardInteractiveAnswer, messages[2].MessageType)
+	assert.Equal(t, message.TypeHandshakeSuccessful, messages[3].MessageType)
+	assert.Equal(t, message.TypeDisconnect, messages[4].MessageType)
+}
+
 func TestConnectMessages(t *testing.T) {
 	logger := log.GetTestLogger(t)
 
@@ -85,6 +138,23 @@ func createTestServer(t *testing.T, dir string, logger log.Logger) (sshserver.Te
 }
 
 func checkStoredAuditMessages(t *testing.T, dir string, logger log.Logger) {
+	messages, errors, done := getStoredMessages(t, dir, logger)
+	if done {
+		return
+	}
+	assert.Empty(t, errors)
+	assert.NotEmpty(t, messages)
+	assert.Equal(t, message.TypeConnect, messages[0].MessageType)
+	assert.Equal(t, message.TypeAuthPassword, messages[1].MessageType)
+	assert.Equal(t, message.TypeAuthPasswordSuccessful, messages[2].MessageType)
+	assert.Equal(t, message.TypeHandshakeSuccessful, messages[3].MessageType)
+	assert.Equal(t, message.TypeNewChannelSuccessful, messages[4].MessageType)
+	assert.Equal(t, message.TypeChannelRequestShell, messages[5].MessageType)
+	assert.Equal(t, message.TypeExit, messages[6].MessageType)
+	assert.Equal(t, message.TypeDisconnect, messages[7].MessageType)
+}
+
+func getStoredMessages(t *testing.T, dir string, logger log.Logger) ([]message.Message, []error, bool) {
 	storage, err := file.NewStorage(
 		file.Config{
 			Directory: dir,
@@ -102,7 +172,7 @@ func checkStoredAuditMessages(t *testing.T, dir string, logger log.Logger) {
 	}
 	assert.NotNil(t, logReader)
 	if logReader == nil {
-		return
+		return nil, nil, true
 	}
 
 	decoder := binary.NewDecoder()
@@ -124,16 +194,7 @@ loop:
 			errors = append(errors, err)
 		}
 	}
-	assert.Empty(t, errors)
-	assert.NotEmpty(t, messages)
-	assert.Equal(t, message.TypeConnect, messages[0].MessageType)
-	assert.Equal(t, message.TypeAuthPassword, messages[1].MessageType)
-	assert.Equal(t, message.TypeAuthPasswordSuccessful, messages[2].MessageType)
-	assert.Equal(t, message.TypeHandshakeSuccessful, messages[3].MessageType)
-	assert.Equal(t, message.TypeNewChannelSuccessful, messages[4].MessageType)
-	assert.Equal(t, message.TypeChannelRequestShell, messages[5].MessageType)
-	assert.Equal(t, message.TypeExit, messages[6].MessageType)
-	assert.Equal(t, message.TypeDisconnect, messages[7].MessageType)
+	return messages, errors, false
 }
 
 type backendHandler struct {
@@ -142,12 +203,28 @@ type backendHandler struct {
 
 func (b *backendHandler) OnAuthKeyboardInteractive(
 	_ string,
-	_ func(
+	challenge func(
 		instruction string,
 		questions sshserver.KeyboardInteractiveQuestions,
 	) (answers sshserver.KeyboardInteractiveAnswers, err error),
 ) (response sshserver.AuthResponse, reason error) {
-	return sshserver.AuthResponseUnavailable, fmt.Errorf("not implemented")
+	answers, err := challenge(
+		"Test",
+		sshserver.KeyboardInteractiveQuestions{{
+			Question:     "Challenge",
+			EchoResponse: true,
+		}},
+	)
+	if err != nil {
+		return
+	}
+	answerText, err := answers.GetByQuestionText("Challenge")
+	if err == nil {
+		if answerText != "Response" {
+			return sshserver.AuthResponseUnavailable, fmt.Errorf("invalid response")
+		}
+	}
+	return sshserver.AuthResponseSuccess, err
 }
 
 func (b *backendHandler) OnClose() {

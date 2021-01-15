@@ -1,15 +1,62 @@
 package auditlogintegration
 
 import (
+	"context"
+
 	"github.com/containerssh/auditlog"
+	"github.com/containerssh/auditlog/message"
 	"github.com/containerssh/sshserver"
 )
 
 type networkConnectionHandler struct {
-	sshserver.AbstractNetworkConnectionHandler
-
 	backend sshserver.NetworkConnectionHandler
 	audit   auditlog.Connection
+}
+
+func (n *networkConnectionHandler) OnAuthKeyboardInteractive(
+	user string,
+	challenge func(
+		instruction string,
+		questions sshserver.KeyboardInteractiveQuestions,
+	) (answers sshserver.KeyboardInteractiveAnswers, err error),
+) (response sshserver.AuthResponse, reason error) {
+	return n.backend.OnAuthKeyboardInteractive(
+		user,
+		func(
+			instruction string,
+			questions sshserver.KeyboardInteractiveQuestions,
+		) (answers sshserver.KeyboardInteractiveAnswers, err error) {
+			var auditQuestions []message.KeyboardInteractiveQuestion
+			for _, q := range questions {
+				auditQuestions = append(auditQuestions, message.KeyboardInteractiveQuestion{
+					Question: q.Question,
+					Echo:     q.EchoResponse,
+				})
+			}
+			n.audit.OnAuthKeyboardInteractiveChallenge(user, instruction, auditQuestions)
+			answers, err = challenge(instruction, questions)
+			if err != nil {
+				return answers, err
+			}
+			var auditAnswers []message.KeyboardInteractiveAnswer
+			for _, q := range auditQuestions {
+				a, err := answers.GetByQuestionText(q.Question)
+				if err != nil {
+					return answers, err
+				}
+				auditAnswers = append(auditAnswers, message.KeyboardInteractiveAnswer{
+					Question: q.Question,
+					Answer:   a,
+				})
+			}
+			n.audit.OnAuthKeyboardInteractiveAnswer(user, auditAnswers)
+			return answers, err
+		},
+	)
+}
+
+func (n *networkConnectionHandler) OnShutdown(shutdownContext context.Context) {
+	n.backend.OnShutdown(shutdownContext)
 }
 
 func (n *networkConnectionHandler) OnAuthPassword(

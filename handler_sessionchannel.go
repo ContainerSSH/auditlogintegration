@@ -1,16 +1,25 @@
 package auditlogintegration
 
 import (
+	"context"
+
 	"github.com/containerssh/auditlog"
 	"github.com/containerssh/sshserver"
 )
 
 type sessionChannelHandler struct {
-	sshserver.AbstractSessionChannelHandler
-
 	backend sshserver.SessionChannelHandler
 	audit   auditlog.Channel
 	session sshserver.SessionChannel
+}
+
+func (s *sessionChannelHandler) OnClose() {
+	s.audit.OnClose()
+	s.backend.OnClose()
+}
+
+func (s *sessionChannelHandler) OnShutdown(shutdownContext context.Context) {
+	s.backend.OnShutdown(shutdownContext)
 }
 
 func (s *sessionChannelHandler) OnUnsupportedChannelRequest(requestID uint64, requestType string, payload []byte) {
