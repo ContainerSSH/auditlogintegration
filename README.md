@@ -8,7 +8,7 @@
 
 This library provides an integration overlay for the [SSH server](https://github.com/containerssh/sshserver) and the [audit log library](https://github.com/containerssh/auditlog)
 
-<p align="center"><strong>Note: This is a developer documentation.</strong><br />The user documentation for ContainerSSH is located at <a href="https://containerssh.github.io">containerssh.github.io</a>.</p>
+<p align="center"><strong>⚠⚠⚠ Warning: This is a developer documentation. ⚠⚠⚠</strong><br />The user documentation for ContainerSSH is located at <a href="https://containerssh.io">containerssh.io</a>.</p>
 
 ## Using this library
 
