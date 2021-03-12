@@ -23,7 +23,7 @@ import (
 )
 
 func TestKeyboardInteractiveAuthentication(t *testing.T) {
-	logger := log.GetTestLogger(t)
+	logger := log.NewTestLogger(t)
 
 	dir, err := ioutil.TempDir("temp", "testcase")
 	assert.NoError(t, err)
@@ -76,7 +76,7 @@ func TestKeyboardInteractiveAuthentication(t *testing.T) {
 }
 
 func TestConnectMessages(t *testing.T) {
-	logger := log.GetTestLogger(t)
+	logger := log.NewTestLogger(t)
 
 	dir, err := ioutil.TempDir("temp", "testcase")
 	assert.NoError(t, err)
