@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0: First stable release
+   
+This is the first stable release for ContainerSSH 0.4.0.
+
 ## 0.9.4: Passing through OnShutdown, Keyboard Interactive.
 
 This release fixes a bug where the OnShutdown hook would not be passed through to the backends and adds Keyboard-Interactive authentication support.
