@@ -15,6 +15,8 @@ github.com/aws/aws-sdk-go v1.38.2 h1:qUXZReQck3SdPwMN3HnNk1Mgq2jJJ2T7V+790HthW4g
 github.com/aws/aws-sdk-go v1.38.2/go.mod h1:hcU610XS61/+aQV88ixoOzUoG7v3b31pl2zKMmprdro=
 github.com/aws/aws-sdk-go v1.38.10 h1:7lQrjAlyYrTGW2+9vnBv5HPSSuv+xDMmgU1YUnNSOOo=
 github.com/aws/aws-sdk-go v1.38.10/go.mod h1:hcU610XS61/+aQV88ixoOzUoG7v3b31pl2zKMmprdro=
+github.com/aws/aws-sdk-go v1.38.25 h1:aNjeh7+MON05cZPtZ6do+KxVT67jPOSQXANA46gOQao=
+github.com/aws/aws-sdk-go v1.38.25/go.mod h1:hcU610XS61/+aQV88ixoOzUoG7v3b31pl2zKMmprdro=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cncf/udpa/go v0.0.0-20201120205902-5459f2c99403/go.mod h1:WmhPx2Nbnhtbo57+VJT5O0JRkEi1Wbu0z5j0R8u5Hbk=
@@ -53,6 +55,8 @@ github.com/containerssh/sshserver v0.9.20 h1:30ggFd7UiHaoBP7m/6FF0EZk6a8CuBqROdE
 github.com/containerssh/sshserver v0.9.20/go.mod h1:yQRp6CLwz3pX/bDDv/bKSF+3SkwTae4+8OaAPVZABRI=
 github.com/containerssh/sshserver v1.0.0 h1:BWVngzeQH+gFHVcuJ4tb3iCQg1X8CKnOhF7mLt0V70c=
 github.com/containerssh/sshserver v1.0.0/go.mod h1:/gIyl45eM171tg8psNAxSjYsyvW9hclAeG/buO7I40g=
+github.com/containerssh/sshserver/v2 v2.0.0-alpha.1 h1:l1+sIFpfucqLRMBPxmG5facU6kBoiqtKvoYEwfdUXZM=
+github.com/containerssh/sshserver/v2 v2.0.0-alpha.1/go.mod h1:oGNWO/RyTfftexE0V2tYRTFPkvtEfUvJ3SUiCgaJPIk=
 github.com/containerssh/structutils v0.9.0 h1:pz4xl5ZrPnpdSx7B/ru8Fj3oU3vOtx1jprIuSkm5s7o=
 github.com/containerssh/structutils v0.9.0/go.mod h1:zirdwNXan3kuTpsJp9Gl3W6VQz0fexqMySqxmfviSjw=
 github.com/containerssh/structutils v1.0.0 h1:XwNSnjmoJpMP8hxX5YbDJRGcU66znRWP5jKUYI2Kh4s=
@@ -224,6 +228,8 @@ golang.org/x/sys v0.0.0-20210320140829-1e4c9ba3b0c4 h1:EZ2mChiOa8udjfp6rRmswTbtZ
 golang.org/x/sys v0.0.0-20210320140829-1e4c9ba3b0c4/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210331175145-43e1dd70ce54 h1:rF3Ohx8DRyl8h2zw9qojyLHLhrJpEMgyPOImREEryf0=
 golang.org/x/sys v0.0.0-20210331175145-43e1dd70ce54/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20210423185535-09eb48e85fd7 h1:iGu644GcxtEcrInvDsQRCwJjtCIOlT2V7IRt6ah2Whw=
+golang.org/x/sys v0.0.0-20210423185535-09eb48e85fd7/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/term v0.0.0-20201117132131-f5c789dd3221 h1:/ZHdbVpdR/jk3g30/d4yUL0JU9kksj8+F/bnQUVLGDM=
 golang.org/x/term v0.0.0-20201117132131-f5c789dd3221/go.mod h1:Nr5EML6q2oocZ2LXRh80K7BxOlk5/8JxuGnuhpl+muw=
 golang.org/x/text v0.3.3 h1:cokOdA+Jmi5PJGXLlLllQSgYigAEfHXJAERHVMaCc2k=

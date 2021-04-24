@@ -5,7 +5,7 @@ import (
 
 	"github.com/containerssh/auditlog"
 	"github.com/containerssh/auditlog/message"
-	"github.com/containerssh/sshserver"
+	sshserver "github.com/containerssh/sshserver/v2"
 )
 
 type networkConnectionHandler struct {
@@ -19,7 +19,8 @@ func (n *networkConnectionHandler) OnAuthKeyboardInteractive(
 		instruction string,
 		questions sshserver.KeyboardInteractiveQuestions,
 	) (answers sshserver.KeyboardInteractiveAnswers, err error),
-) (response sshserver.AuthResponse, reason error) {
+	clientVersion string,
+) (response sshserver.AuthResponse, metadata map[string]string, reason error) {
 	return n.backend.OnAuthKeyboardInteractive(
 		user,
 		func(
@@ -52,6 +53,7 @@ func (n *networkConnectionHandler) OnAuthKeyboardInteractive(
 			n.audit.OnAuthKeyboardInteractiveAnswer(user, auditAnswers)
 			return answers, err
 		},
+		clientVersion,
 	)
 }
 
@@ -62,9 +64,10 @@ func (n *networkConnectionHandler) OnShutdown(shutdownContext context.Context) {
 func (n *networkConnectionHandler) OnAuthPassword(
 	username string,
 	password []byte,
-) (response sshserver.AuthResponse, reason error) {
+	clientVersion string,
+) (response sshserver.AuthResponse, metadata map[string]string, reason error) {
 	n.audit.OnAuthPassword(username, password)
-	response, reason = n.backend.OnAuthPassword(username, password)
+	response, metadata, reason = n.backend.OnAuthPassword(username, password, clientVersion)
 	switch response {
 	case sshserver.AuthResponseSuccess:
 		n.audit.OnAuthPasswordSuccess(username, password)
@@ -77,18 +80,20 @@ func (n *networkConnectionHandler) OnAuthPassword(
 			n.audit.OnAuthPasswordBackendError(username, password, "")
 		}
 	}
-	return response, reason
+	return response, metadata, reason
 }
 
 func (n *networkConnectionHandler) OnAuthPubKey(
 	username string,
 	pubKey string,
+	clientVersion string,
 ) (
 	response sshserver.AuthResponse,
+	metadata map[string]string,
 	reason error,
 ) {
 	n.audit.OnAuthPubKey(username, pubKey)
-	response, reason = n.backend.OnAuthPubKey(username, pubKey)
+	response, metadata, reason = n.backend.OnAuthPubKey(username, pubKey, clientVersion)
 	switch response {
 	case sshserver.AuthResponseSuccess:
 		n.audit.OnAuthPubKeySuccess(username, pubKey)
@@ -101,7 +106,7 @@ func (n *networkConnectionHandler) OnAuthPubKey(
 			n.audit.OnAuthPubKeyBackendError(username, pubKey, "")
 		}
 	}
-	return response, reason
+	return response, metadata, reason
 }
 
 func (n *networkConnectionHandler) OnHandshakeFailed(reason error) {
@@ -111,12 +116,14 @@ func (n *networkConnectionHandler) OnHandshakeFailed(reason error) {
 
 func (n *networkConnectionHandler) OnHandshakeSuccess(
 	username string,
+	clientVersion string,
+	metadata map[string]string,
 ) (
 	connection sshserver.SSHConnectionHandler,
 	failureReason error,
 ) {
 	n.audit.OnHandshakeSuccessful(username)
-	backend, err := n.backend.OnHandshakeSuccess(username)
+	backend, err := n.backend.OnHandshakeSuccess(username, clientVersion, metadata)
 	if err != nil {
 		return nil, err
 	}

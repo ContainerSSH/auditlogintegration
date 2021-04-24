@@ -16,7 +16,7 @@ import (
 	"github.com/containerssh/auditlog/storage/file"
 	"github.com/containerssh/geoip"
 	"github.com/containerssh/log"
-	"github.com/containerssh/sshserver"
+	sshserver "github.com/containerssh/sshserver/v2"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/containerssh/auditlogintegration"
@@ -208,7 +208,8 @@ func (b *backendHandler) OnAuthKeyboardInteractive(
 		instruction string,
 		questions sshserver.KeyboardInteractiveQuestions,
 	) (answers sshserver.KeyboardInteractiveAnswers, err error),
-) (response sshserver.AuthResponse, reason error) {
+	_ string,
+) (response sshserver.AuthResponse, metadata map[string]string, reason error) {
 	answers, err := challenge(
 		"Test",
 		sshserver.KeyboardInteractiveQuestions{{
@@ -222,10 +223,10 @@ func (b *backendHandler) OnAuthKeyboardInteractive(
 	answerText, err := answers.GetByQuestionText("Challenge")
 	if err == nil {
 		if answerText != "Response" {
-			return sshserver.AuthResponseUnavailable, fmt.Errorf("invalid response")
+			return sshserver.AuthResponseUnavailable, nil, fmt.Errorf("invalid response")
 		}
 	}
-	return sshserver.AuthResponseSuccess, err
+	return sshserver.AuthResponseSuccess, nil, err
 }
 
 func (b *backendHandler) OnClose() {
@@ -304,23 +305,28 @@ func (b *backendHandler) OnSessionChannel(_ uint64, _ []byte, session sshserver.
 	return b, nil
 }
 
-func (b *backendHandler) OnAuthPassword(username string, _ []byte) (
+func (b *backendHandler) OnAuthPassword(username string, _ []byte, _ string) (
 	response sshserver.AuthResponse,
+	metadata map[string]string,
 	reason error,
 ) {
 	if username == "test" {
-		return sshserver.AuthResponseSuccess, nil
+		return sshserver.AuthResponseSuccess, nil, nil
 	}
-	return sshserver.AuthResponseFailure, nil
+	return sshserver.AuthResponseFailure, nil, nil
 }
 
-func (b *backendHandler) OnAuthPubKey(_ string, _ string) (response sshserver.AuthResponse, reason error) {
-	return sshserver.AuthResponseFailure, nil
+func (b *backendHandler) OnAuthPubKey(_ string, _ string, _ string) (
+	response sshserver.AuthResponse,
+	metadata map[string]string,
+	reason error,
+) {
+	return sshserver.AuthResponseFailure, nil, nil
 }
 
 func (b *backendHandler) OnHandshakeFailed(_ error) {}
 
-func (b *backendHandler) OnHandshakeSuccess(_ string) (
+func (b *backendHandler) OnHandshakeSuccess(_ string, _ string, _ map[string]string) (
 	connection sshserver.SSHConnectionHandler,
 	failureReason error,
 ) {

@@ -5,7 +5,7 @@ import (
 
 	"github.com/containerssh/geoip/geoipprovider"
 	"github.com/containerssh/log"
-	"github.com/containerssh/sshserver"
+	sshserver "github.com/containerssh/sshserver/v2"
 
 	"github.com/containerssh/auditlog"
 )

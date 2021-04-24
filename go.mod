@@ -3,13 +3,15 @@ module github.com/containerssh/auditlogintegration
 go 1.14
 
 require (
+	github.com/aws/aws-sdk-go v1.38.25 // indirect
 	github.com/containerssh/auditlog v1.0.0
 	github.com/containerssh/geoip v1.0.0
 	github.com/containerssh/log v1.0.0
-	github.com/containerssh/sshserver v1.0.0
+	github.com/containerssh/sshserver/v2 v2.0.0-alpha.1
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/mattn/go-shellwords v1.0.11 // indirect
 	github.com/stretchr/testify v1.7.0
+	golang.org/x/sys v0.0.0-20210423185535-09eb48e85fd7 // indirect
 )
 
 // Fixes CVE-2020-9283

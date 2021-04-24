@@ -6,7 +6,7 @@ import (
 
 	"github.com/containerssh/auditlog"
 	"github.com/containerssh/auditlog/message"
-	"github.com/containerssh/sshserver"
+	sshserver "github.com/containerssh/sshserver/v2"
 )
 
 type sshConnectionHandler struct {
