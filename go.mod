@@ -7,9 +7,7 @@ require (
 	github.com/containerssh/geoip v1.0.0
 	github.com/containerssh/log v1.0.0
 	github.com/containerssh/sshserver v1.0.0
-	github.com/imdario/mergo v0.3.12 // indirect
-	github.com/mattn/go-shellwords v1.0.11 // indirect
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 )
 
 // Fixes CVE-2020-9283
