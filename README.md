@@ -3,12 +3,9 @@
 <!--suppress HtmlDeprecatedAttribute -->
 <h1 align="center">ContainerSSH SSH Server Audit Log Integration</h1>
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/containerssh/auditlogintegration?style=for-the-badge)](https://goreportcard.com/report/github.com/containerssh/auditlogintegration)
-[![LGTM Alerts](https://img.shields.io/lgtm/alerts/github/ContainerSSH/auditlogintegration?style=for-the-badge)](https://lgtm.com/projects/g/ContainerSSH/auditlogintegration/)
+<p align="center"><strong>⚠⚠⚠ Deprecated: ⚠⚠⚠</strong><br />This repository is deprecated in favor of <a href="https://github.com/ContainerSSH/libcontainerssh">libcontainerssh</a> for ContainerSSH 0.5.</p>
 
 This library provides an integration overlay for the [SSH server](https://github.com/containerssh/sshserver) and the [audit log library](https://github.com/containerssh/auditlog)
-
-<p align="center"><strong>⚠⚠⚠ Warning: This is a developer documentation. ⚠⚠⚠</strong><br />The user documentation for ContainerSSH is located at <a href="https://containerssh.io">containerssh.io</a>.</p>
 
 ## Using this library
 
